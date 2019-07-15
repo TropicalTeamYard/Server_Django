@@ -1,0 +1,34 @@
+<!-- Post Header -->
+<header class="intro-header" >
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-9 col-md-offset-1">
+                <div class="post-heading">
+                    <h1>{{ page.title }}</h1>
+                    {% if page.subtitle %}
+                    <h2 class="subheading">{{ page.subtitle }}</h2>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+            <div id="post_content"  class="col-lg-8 col-lg-offset-2 col-md-9 col-md-offset-1 post-container">{{ content }}</div>
+        </div>
+    </div>
+</article>
+
+<script>
+$(document).ready(() => {
+var src = $('#post_content').text();
+var converter = new showdown.Converter();
+var html = converter.makeHtml(src);
+$('#post_content').html(html)
+});
+</script>
