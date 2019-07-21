@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from django.db import models
 
@@ -66,6 +66,21 @@ class UserActivity(models.Model):
 
     def __str__(self):
         return f'{self.user.name}-{self.software}-{UserActivity._get_device_type_des(self.device_type)}'
+
+    @staticmethod
+    def find_and_update(user: User, software: str, device_type: str, access_ip):
+        query_set = UserActivity.objects.filter(
+            user=user,
+            software=software,
+            device_type=UserActivity._get_device_type_value(device_type))
+        if len(query_set) > 0 and (datetime.now().astimezone() - query_set[0].access_time).days < 30:
+            first = query_set[0]
+        else:
+            return False
+        first.access_ip = access_ip
+        first.access_time = datetime.now()
+        first.save()
+        return True
 
     @staticmethod
     def update(user: User, software: str, device_type: str, access_ip: str):

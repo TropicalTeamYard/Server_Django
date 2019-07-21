@@ -200,3 +200,70 @@ def login(request: HttpRequest):
             )
     except KeyError:
         return response_ae
+
+
+def auto_login(request: HttpRequest):
+    try:
+        if request.method == 'GET':
+            if userconfig.mode == 'debug':
+                token = request.GET['token']
+            else:
+                return Http404()
+        elif request.method == 'POST':
+            token = request.GET['token']
+        else:
+            return Http404()
+        data = utils.decrypt_token(token)
+        print(data)
+        uid = data['uid']
+        # time = data['time']
+        software = data['software']
+        device_type = data['device_type']
+
+        msg = []
+        if not utils.check_software(software):
+            msg.append('arg(software) is invalid')
+            msg.append('arg(device_type is invalid')
+        if len(msg) > 0:
+            return JsonResponse(
+                {'msg': 'arguments error :{0}'.format(';'.join(msg)),
+                 'shortcut': 'ae'}
+            )
+        query_set = models.User.objects.filter(uid=uid)
+        if len(query_set) > 0:
+            first_user = query_set[0]
+            log_template = 'state={0}::' \
+                f'access_ip={utils.get_request_ip(request)}' \
+                f'access_time={utils.format_time(timezone.now())}'
+            if not models.UserActivity.find_and_update(first_user, software, device_type, utils.get_request_ip(request)):
+                models.UserLog.write(first_user, 'auto_login', log_template.format('success'))
+                return JsonResponse(
+                    {'msg': 'auto_login is not invalid, please login',
+                     'shortcut': 'le'}
+                )
+            else:
+                token = utils.encrypt_token(first_user.uid, time.time(), software, device_type)
+                jsondump = first_user.to_json()
+                jsondump['access_time'] = utils.format_time(timezone.now())
+                jsondump['token'] = token
+                models.UserLog.write(first_user, 'auto_login', log_template.format('fail'))
+                return JsonResponse(
+                    {'msg': 'ok, let\'s fun',
+                     'shortcut': 'ok',
+                     'data': jsondump}
+                )
+        else:
+            return JsonResponse(
+                {'msg': 'user not existed',
+                 'shortcut': 'ue'}
+            )
+    except UnicodeDecodeError as e:
+        print(e)
+        return JsonResponse(
+            {'msg': 'token format error',
+             'shortcut': 'fe'}
+        )
+    except KeyError as e:
+        print(e)
+        return response_ae
+

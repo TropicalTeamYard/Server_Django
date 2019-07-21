@@ -86,8 +86,14 @@ def decrypt_token(token: str):
     :return:
     """
     token_raw = security.default_aes.decrypt(token)
+
     args = token_raw.split('::')
-    return {'uid': args[0], 'time': float(args[1]), 'software': args[2], 'device_type': args[3]}
+    print(args)
+    print(args[0])
+    print(args[1])
+    print(args[2])
+    print(args[3])
+    return {'uid': args[0], 'software': args[1],  'time': float(eval(args[2])), 'device_type': args[3]}
 
 
 def default_time():
